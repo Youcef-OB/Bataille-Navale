@@ -9,9 +9,13 @@ public class MainServer {
 			ServerSocket ecoute = new ServerSocket(1500);
 			System.out.println("Serveur lancé!");
 			while (true) {
+				/*
+				 * Creer un Thread partie pour chaque couple de client qui se connecte sur le
+				 * port 1500
+				 */
 				Socket client1 = ecoute.accept();
 				Socket client2 = ecoute.accept();
-				new ThreadChat(client1, client2).start();
+				new ThreadJeu(client1, client2).start();
 			}
 		} catch (Exception e) {
 		}

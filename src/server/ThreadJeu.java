@@ -9,7 +9,7 @@ import jeu.Bataille;
 import jeu.Bateau;
 import jeu.Board;
 
-public class ThreadChat extends Thread {
+public class ThreadJeu extends Thread {
 	BufferedReader in1;
 	BufferedReader in2;
 	PrintWriter out1;
@@ -18,10 +18,11 @@ public class ThreadChat extends Thread {
 	Bataille partie;
 	Bateau[] BateauxCreeParJ1, BateauxCreeParJ2;
 
+	// Ce tableau est un tableau d'exemple d'entrée de coordonées
 	Bateau[] TEST = { new Bateau(0, 0, 2, 0), new Bateau(0, 2, 0, 4), new Bateau(3, 5, 3, 7), new Bateau(7, 4, 9, 4),
 			new Bateau(0, 8, 0, 9) };
 
-	public ThreadChat(Socket client1, Socket client2) {
+	public ThreadJeu(Socket client1, Socket client2) {
 		try {
 			in1 = new BufferedReader(new InputStreamReader(client1.getInputStream()));
 			in2 = new BufferedReader(new InputStreamReader(client2.getInputStream()));
@@ -34,11 +35,22 @@ public class ThreadChat extends Thread {
 			board2 = new Board();
 			partie = new Bataille(board1, board2);
 
-			// BateauxCreeParJ1 = ListDesBateauxJoueur(in1);
-			// BateauxCreeParJ2 = ListDesBateauxJoueur(in2);
+			/*
+			 * Voici les 2 commandes à mettre si on veut que chaque joueur rentre ses
+			 * coordonnées, pour l'exemple je les ai mis en commentaires
+			 * 
+			 * BateauxCreeParJ1 = ListDesBateauxJoueur(in1);
+			 * 
+			 * BateauxCreeParJ2 = ListDesBateauxJoueur(in2);
+			 * 
+			 * InitDuBoardComplet(board1, BateauxCreeParJ1);
+			 * 
+			 * InitDuBoardComplet(board2, BateauxCreeParJ2 );
+			 */
 
-			InitDuBoardComplet(board1, in1, TEST);
-			InitDuBoardComplet(board2, in2, TEST);
+			// On initialise les 2 boards
+			InitDuBoardComplet(board1, TEST);
+			InitDuBoardComplet(board2, TEST);
 
 			out1.println(board1.affichage());
 			out2.println(board2.affichage());
@@ -50,7 +62,11 @@ public class ThreadChat extends Thread {
 		try {
 			while (true) {
 
-				ResultatFrappe(out1, in1, board2);// Le joueur 1 choisit une case à detruire
+				ResultatFrappe(out1, in1, board2);// Le joueur 1 choisit une case à detruire du board du joueur 2
+				/*
+				 * Cette boucle permet d'arreter la partie ,c'est à dire le thread, si il n'y a
+				 * plus de bateaux restants.
+				 */
 				if (board2.batRestant(TEST) == 0) {
 					out2.println("Vous avez perdu");
 					out1.println("Vous avez gagné");
@@ -77,6 +93,11 @@ public class ThreadChat extends Thread {
 		}
 	}
 
+	/*
+	 * Cette méthode creér un tableau de bateau en fonction des coordonnées mis en
+	 * entrer par le joueur. Elle instancie 5 bateaux en faisant appelle à la
+	 * méthode InstancieUnBateau(in) 5 fois.
+	 */
 	public Bateau[] ListDesBateauxJoueur(BufferedReader in) {
 		Bateau[] bateaux = new Bateau[5];
 		for (int i = 0; i < 5; i++) {
@@ -85,10 +106,22 @@ public class ThreadChat extends Thread {
 		return bateaux;
 	}
 
-	public void InitDuBoardComplet(Board board, BufferedReader in, Bateau[] bateaux) {
+	/*
+	 * Cette méthode prend en entrée le board du joueur concerné ainsi que sa liste
+	 * de bateaux.
+	 * 
+	 * Elle permet d'initialiser le Board du Joueur en fonction des bateaux mis en
+	 * entrer
+	 * 
+	 */
+	public void InitDuBoardComplet(Board board, Bateau[] bateaux) {
 
-		for (int i = 0; i < 5; i++) { // on teste d'abord on envoie ensuite
-			if (!board.addBoat(bateaux[i])) {
+		/*
+		 * Pour chaque bateau présent dans le tableau on teste si il est possible de le
+		 * rajouter
+		 */
+		for (int i = 0; i < 5; i++) {
+			if (!board.addBoat(bateaux[i])) { // la méthode addBoat fait un test avant d'ajouter le bateau
 				throw new RuntimeException("Initialisation raté à cause du bateau" + i + "Veuillez réessayer");
 			}
 			board.addBoat(bateaux[i]);
@@ -96,6 +129,10 @@ public class ThreadChat extends Thread {
 		}
 	}
 
+	/*
+	 * Cette méthode permet de tester si le point mis en argument est compris entre
+	 * 0 et 9. Cela permet de facilité le traitement de la donnée par le programme.
+	 */
 	public static boolean testCoord(int l, int c) {
 
 		if (l < 10 && l >= 0) {
@@ -107,6 +144,10 @@ public class ThreadChat extends Thread {
 		return false;
 	}
 
+	/*
+	 * Cette méthode permet d'instancier un Bateau à partir de l'input d'un joueur
+	 * grace à la méthode getcoord
+	 */
 	public Bateau InstancieUnBateau(BufferedReader in) {
 
 		int[] point1 = getcoord(in);
@@ -119,6 +160,11 @@ public class ThreadChat extends Thread {
 
 	}
 
+	/*
+	 * Cette méthode permet de vérifier que l'input du Joueur est exactement de la
+	 * forme (x;y) avec x et y dans l'intervalle [0,9] renvoie une exeption sinon.
+	 * Si le test est passé on affecte l'input au coordonnées.
+	 */
 	public static int[] getcoord(BufferedReader in) {
 		String msg;
 		int[] coord = new int[2];
@@ -142,6 +188,9 @@ public class ThreadChat extends Thread {
 		return coord;
 	}
 
+	/*
+	 * Cette méthode renvoie le resultat de la frappe au joueur
+	 */
 	public static void ResultatFrappe(PrintWriter agresseurO, BufferedReader agresseurI, Board victime) {
 		agresseurO.println("Veuillez entrer les coordonnées a frapper :");
 		int[] instruction = getcoord(agresseurI);
